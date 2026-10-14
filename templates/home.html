@@ -1,0 +1,29 @@
+
+{% extends "base.html" %}
+
+{% block title %}Home | Rose Leaf Classifier{% endblock %}
+
+{% block content %}
+
+<section style="padding: 50px 0; max-width: 720px;">
+    <p style="color: #347650; font-weight: bold;">
+        ROSE LEAF DISEASE CLASSIFICATION
+    </p>
+
+    <h1 style="font-size: clamp(2rem, 5vw, 3.5rem);">
+        A smarter way to explore rose leaf health.
+    </h1>
+
+    <p style="font-size: 1.1rem; line-height: 1.8;">
+        Upload a photograph of a rose leaf to explore how a trained
+        image-classification model identifies leaf conditions.
+    </p>
+
+    <p style="color: #617267; line-height: 1.7;">
+        This application is being developed as a research project.
+        Its predictions are experimental and should not replace
+        expert plant-disease diagnosis.
+    </p>
+</section>
+
+{% endblock %}

@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+
+{% block title %}Result | Rose Leaf Classifier{% endblock %}
+
+{% block content %}
+
+<style>
+    .score-row {
+        margin-bottom: 10px;
+        border-radius: 8px;
+    }
+    .score-row.top {
+        padding: 10px 12px;
+        background: #f1f8f3;
+    }
+    .score-row .score-head {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.92rem;
+        margin-bottom: 4px;
+    }
+    .score-row .score-head .score-label {
+        color: #244c36;
+    }
+    .score-row .score-head .score-value {
+        color: #617267;
+    }
+    .score-row.top .score-head {
+        font-weight: bold;
+    }
+    .score-track {
+        height: 8px;
+        background: #eef6f0;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    .score-fill {
+        height: 100%;
+        width: 0;
+        background: #347650;
+    }
+    .score-row.top .score-fill {
+        background: #244c36;
+    }
+</style>
+
+<section style="padding: 40px 0;">
+    <p style="color: #347650; font-weight: bold;">CLASSIFICATION RESULT</p>
+
+    <h1 style="font-size: clamp(1.8rem, 4vw, 2.6rem); margin-bottom: 4px;">
+        {{ predicted_label }}
+    </h1>
+
+    <p style="color: #617267; line-height: 1.7; margin-top: 0;">
+        Top confidence:
+        <strong>{{ "%.1f"|format(prediction.confidence * 100) }}%</strong>
+        &nbsp;·&nbsp; {{ prediction.created_at.strftime("%b %d, %Y · %H:%M") }}
+    </p>
+
+    <div style="
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 22px;
+        margin-top: 24px;
+    ">
+        <!-- Left: classification -->
+        <div style="
+            background: white;
+            border-radius: 14px;
+            padding: 22px;
+            box-shadow: 0 10px 30px rgba(36, 76, 54, 0.08);
+        ">
+            <h2 style="margin-top: 0; font-size: 1.1rem; color: #244c36;">
+                Classification scores
+            </h2>
+
+            {% for key, label, score in ordered_scores %}
+                <div class="score-row {{ 'top' if loop.first else '' }}">
+                    <div class="score-head">
+                        <span class="score-label">{{ label }}</span>
+                        <span class="score-value">
+                            {{ "%.1f"|format(score * 100) }}%
+                        </span>
+                    </div>
+                    <div class="score-track">
+                        <div class="score-fill"
+                             data-width="{{ (score * 100)|round(1) }}">
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Right: guidance -->
+        <div style="
+            background: white;
+            border-radius: 14px;
+            padding: 22px;
+            box-shadow: 0 10px 30px rgba(36, 76, 54, 0.08);
+        ">
+            <h2 style="margin-top: 0; font-size: 1.1rem; color: #244c36;">
+                {{ info.title }}
+            </h2>
+            <p style="margin: 0 0 12px; color: #24352a; line-height: 1.65;">
+                {{ info.description }}
+            </p>
+            <p style="margin: 0 0 8px; color: #617267;">
+                <strong>Cause:</strong> {{ info.cause }}
+            </p>
+            {% if info.symptoms %}
+                <p style="margin: 0 0 4px; color: #617267;">
+                    <strong>Symptoms:</strong>
+                </p>
+                <ul style="margin: 0 0 12px 18px; color: #617267; line-height: 1.6;">
+                    {% for s in info.symptoms %}
+                        <li style="margin-bottom: 4px;">{{ s }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+            <p style="margin: 0; color: #24352a; line-height: 1.65;">
+                <strong>Recommendation:</strong> {{ info.recommendation }}
+            </p>
+        </div>
+    </div>
+
+    <!-- Image -->
+    <div style="
+        margin-top: 24px;
+        background: white;
+        border-radius: 14px;
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(36, 76, 54, 0.08);
+    ">
+        <h2 style="margin-top: 0; font-size: 1.1rem; color: #244c36;">
+            Uploaded image
+        </h2>
+        <img
+            src="{{ url_for('uploaded_file', filename=prediction.image_filename) }}"
+            alt="Uploaded rose leaf"
+            style="max-width: 100%; border-radius: 10px; display: block;"
+        >
+    </div>
+
+    <div style="margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap;">
+        <a class="button" href="{{ url_for('predict') }}">Classify another</a>
+        <a class="button secondary" href="{{ url_for('history') }}">View history</a>
+    </div>
+</section>
+
+<script>
+    document.querySelectorAll(".score-fill[data-width]").forEach(function (el) {
+        var w = parseFloat(el.getAttribute("data-width"));
+        if (!isNaN(w)) {
+            el.style.width = Math.max(0, Math.min(100, w)) + "%";
+        }
+    });
+</script>
+
+{% endblock %}

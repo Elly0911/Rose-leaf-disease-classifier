@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}History | Rose Leaf Classifier{% endblock %}
+
+{% block content %}
+
+<section style="padding: 40px 0;">
+    <p style="color: #347650; font-weight: bold;">PREDICTION HISTORY</p>
+
+    <h1 style="font-size: clamp(1.8rem, 4vw, 2.6rem); margin-bottom: 8px;">
+        Your previous predictions
+    </h1>
+
+    <p style="color: #617267; line-height: 1.7; margin-top: 0;">
+        Review every rose leaf image you have classified. Click a card
+        to see the full result.
+    </p>
+
+    {% if predictions and predictions|length > 0 %}
+        <div style="
+            margin-top: 24px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 20px;
+        ">
+            {% for prediction in predictions %}
+                {% set label = DISPLAY_NAMES.get(prediction.predicted_class, prediction.predicted_class) %}
+                <a
+                    href="{{ url_for('result', prediction_id=prediction.id) }}"
+                    style="
+                        text-decoration: none;
+                        color: inherit;
+                        background: white;
+                        border-radius: 14px;
+                        overflow: hidden;
+                        box-shadow: 0 8px 24px rgba(36, 76, 54, 0.06);
+                        display: block;
+                    "
+                >
+                    {% if prediction.image_filename %}
+                        <img
+                            src="{{ url_for('uploaded_file', filename=prediction.image_filename) }}"
+                            alt="Rose leaf"
+                            style="width: 100%; height: 160px;
+                                   object-fit: cover; display: block;"
+                        >
+                    {% endif %}
+                    <div style="padding: 16px 18px;">
+                        <p style="margin: 0 0 6px; font-weight: bold;
+                                  color: #244c36;">
+                            {{ label }}
+                        </p>
+                        <p style="margin: 0; color: #347650; font-size: 0.9rem;">
+                            Confidence:
+                            {{ "%.1f"|format(prediction.confidence * 100) }}%
+                        </p>
+                        <p style="margin: 8px 0 0; color: #617267;
+                                  font-size: 0.85rem;">
+                            {{ prediction.created_at.strftime("%b %d, %Y · %H:%M") }}
+                        </p>
+                    </div>
+                </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div style="
+            margin-top: 16px;
+            background: #eef6f0;
+            border: 1px dashed #b7d9c4;
+            border-radius: 14px;
+            padding: 30px 26px;
+            color: #3a5a47;
+            text-align: center;
+        ">
+            <h3 style="margin-top: 0; font-size: 1.1rem;">No predictions yet</h3>
+            <p style="margin: 0 0 18px; line-height: 1.7;">
+                Once you classify your first leaf, your history will appear here.
+            </p>
+            <a class="button" href="{{ url_for('predict') }}">Classify a leaf</a>
+        </div>
+    {% endif %}
+</section>
+
+{% endblock %}

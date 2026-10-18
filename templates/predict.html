@@ -1,0 +1,458 @@
+{% extends "base.html" %}
+
+{% block title %}Classify | Rose Leaf Classifier{% endblock %}
+
+{% block content %}
+
+<section style="padding: 40px 0; max-width: 960px; margin: 0 auto;">
+    <p style="color: #347650; font-weight: bold;">NEW PREDICTION</p>
+
+    <h1 style="font-size: clamp(1.8rem, 4vw, 2.6rem); margin-bottom: 8px;">
+        Upload a rose leaf image
+    </h1>
+
+    <p style="color: #617267; line-height: 1.7; margin-top: 0; margin-bottom: 24px;">
+        Choose a clear, well-lit photograph of a single rose leaf.
+        Supported formats: PNG, JPG, JPEG, WEBP. Maximum size: 8 MB.
+    </p>
+
+    <!-- Upload card -->
+    <div style="
+        background: white;
+        border-radius: 14px;
+        padding: 24px;
+        box-shadow: 0 10px 30px rgba(36, 76, 54, 0.08);
+    ">
+        <div class="form-group" style="margin-bottom: 14px;">
+            <label for="image">Rose leaf image</label>
+            <input
+                type="file"
+                id="image"
+                name="image"
+                accept="image/png,image/jpeg,image/webp"
+            >
+            <div class="field-error" id="file-error"></div>
+        </div>
+
+        <!-- Loading bar (image read) -->
+        <div id="load-wrap" style="display: none; margin-top: 10px;">
+            <div style="
+                display: flex;
+                justify-content: space-between;
+                font-size: 0.9rem;
+                color: #617267;
+                margin-bottom: 4px;
+            ">
+                <span>Loading image…</span>
+                <span id="load-pct">0%</span>
+            </div>
+            <div style="
+                height: 8px;
+                background: #eef6f0;
+                border-radius: 4px;
+                overflow: hidden;
+            ">
+                <div id="load-bar" style="
+                    height: 100%;
+                    width: 0%;
+                    background: #347650;
+                    transition: width 0.15s linear;
+                "></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image preview + classify button -->
+    <div id="preview-card" style="
+        display: none;
+        margin-top: 24px;
+        background: white;
+        border-radius: 14px;
+        padding: 20px;
+        box-shadow: 0 10px 30px rgba(36, 76, 54, 0.08);
+    ">
+        <h2 style="margin: 0 0 12px; font-size: 1.15rem; color: #244c36;">
+            Image preview
+        </h2>
+        <img id="preview-img" alt="Selected rose leaf" style="
+            max-width: 100%;
+            max-height: 380px;
+            border-radius: 10px;
+            display: block;
+            margin: 0 auto 16px;
+        ">
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;
+                    justify-content: center;">
+            <button id="classify-btn" type="button" class="button">
+                Classify leaf
+            </button>
+            <button id="reset-btn" type="button" class="button secondary">
+                Choose another image
+            </button>
+        </div>
+    </div>
+
+    <!-- Classifying progress (model inference) -->
+    <div id="classify-status" style="display: none; margin-top: 24px;">
+        <div style="
+            background: white;
+            border-radius: 14px;
+            padding: 20px 24px;
+            box-shadow: 0 10px 30px rgba(36, 76, 54, 0.08);
+        ">
+            <p style="margin: 0 0 10px; color: #244c36; font-weight: bold;">
+                Running classification…
+            </p>
+            <div style="
+                height: 8px;
+                background: #eef6f0;
+                border-radius: 4px;
+                overflow: hidden;
+            ">
+                <div id="classify-bar" style="
+                    height: 100%;
+                    width: 0%;
+                    background: #347650;
+                    transition: width 0.2s ease;
+                "></div>
+            </div>
+            <p id="classify-pct" style="
+                margin: 8px 0 0;
+                color: #617267;
+                font-size: 0.9rem;
+            ">0%</p>
+        </div>
+    </div>
+
+    <!-- Inline result area -->
+    <div id="result-area" style="display: none; margin-top: 28px;"></div>
+</section>
+
+<script>
+(function () {
+    const fileInput = document.getElementById("image");
+    const fileError = document.getElementById("file-error");
+    const loadWrap = document.getElementById("load-wrap");
+    const loadBar = document.getElementById("load-bar");
+    const loadPct = document.getElementById("load-pct");
+    const previewCard = document.getElementById("preview-card");
+    const previewImg = document.getElementById("preview-img");
+    const classifyBtn = document.getElementById("classify-btn");
+    const resetBtn = document.getElementById("reset-btn");
+    const classifyStatus = document.getElementById("classify-status");
+    const classifyBar = document.getElementById("classify-bar");
+    const classifyPct = document.getElementById("classify-pct");
+    const resultArea = document.getElementById("result-area");
+
+    const MAX_BYTES = 8 * 1024 * 1024;
+    let selectedFile = null;
+    let previewURL = null;
+
+    function setFileError(msg) {
+        fileError.textContent = msg || "";
+    }
+
+    function resetUI() {
+        selectedFile = null;
+        if (previewURL) {
+            URL.revokeObjectURL(previewURL);
+            previewURL = null;
+        }
+        fileInput.value = "";
+        loadWrap.style.display = "none";
+        loadBar.style.width = "0%";
+        loadPct.textContent = "0%";
+        previewCard.style.display = "none";
+        previewImg.removeAttribute("src");
+        classifyStatus.style.display = "none";
+        classifyBar.style.width = "0%";
+        classifyPct.textContent = "0%";
+        resultArea.style.display = "none";
+        resultArea.innerHTML = "";
+        setFileError("");
+    }
+
+    // Simulated smooth progress while the browser reads the file.
+    function animateLoadTo(target, done) {
+        let current = 0;
+        loadWrap.style.display = "block";
+        loadBar.style.width = "0%";
+        loadPct.textContent = "0%";
+
+        const step = () => {
+            current = Math.min(target, current + Math.random() * 12 + 4);
+            loadBar.style.width = current.toFixed(1) + "%";
+            loadPct.textContent = Math.round(current) + "%";
+            if (current < target) {
+                setTimeout(step, 60);
+            } else {
+                loadBar.style.width = target + "%";
+                loadPct.textContent = target + "%";
+                if (done) done();
+            }
+        };
+        step();
+    }
+
+    fileInput.addEventListener("change", () => {
+        setFileError("");
+        resultArea.style.display = "none";
+        resultArea.innerHTML = "";
+        previewCard.style.display = "none";
+        classifyStatus.style.display = "none";
+
+        const file = fileInput.files && fileInput.files[0];
+        if (!file) {
+            loadWrap.style.display = "none";
+            return;
+        }
+
+        if (!/^image\/(png|jpe?g|webp)$/i.test(file.type)) {
+            setFileError("Unsupported file type. Use PNG, JPG, or WEBP.");
+            loadWrap.style.display = "none";
+            return;
+        }
+        if (file.size > MAX_BYTES) {
+            setFileError("Image is too large. Maximum size is 8 MB.");
+            loadWrap.style.display = "none";
+            return;
+        }
+
+        selectedFile = file;
+
+        if (previewURL) URL.revokeObjectURL(previewURL);
+        previewURL = URL.createObjectURL(file);
+
+        // Animate loading bar, then reveal preview once image decodes.
+        animateLoadTo(100, () => {
+            const img = new Image();
+            img.onload = () => {
+                previewImg.src = previewURL;
+                previewCard.style.display = "block";
+                setTimeout(() => {
+                    loadWrap.style.display = "none";
+                }, 200);
+            };
+            img.onerror = () => {
+                setFileError("Could not read that image. Try another file.");
+                loadWrap.style.display = "none";
+            };
+            img.src = previewURL;
+        });
+    });
+
+    resetBtn.addEventListener("click", resetUI);
+
+    classifyBtn.addEventListener("click", async () => {
+        if (!selectedFile) {
+            setFileError("Please choose an image first.");
+            return;
+        }
+
+        classifyBtn.disabled = true;
+        classifyBtn.style.opacity = "0.65";
+        classifyBtn.style.cursor = "not-allowed";
+
+        classifyStatus.style.display = "block";
+        resultArea.style.display = "none";
+        resultArea.innerHTML = "";
+
+        // Simulated inference progress bar (advances to ~90% while
+        // waiting for the server, then snaps to 100% on response).
+        let pct = 0;
+        classifyBar.style.width = "0%";
+        classifyPct.textContent = "0%";
+        const tick = setInterval(() => {
+            pct = Math.min(90, pct + Math.random() * 8 + 3);
+            classifyBar.style.width = pct.toFixed(1) + "%";
+            classifyPct.textContent = Math.round(pct) + "%";
+        }, 180);
+
+        const formData = new FormData();
+        formData.append("image", selectedFile);
+
+        try {
+            const resp = await fetch("{{ url_for('api_classify') }}", {
+                method: "POST",
+                body: formData,
+                credentials: "same-origin",
+            });
+
+            const data = await resp.json();
+
+            clearInterval(tick);
+
+            if (!resp.ok) {
+                classifyBar.style.width = "100%";
+                classifyPct.textContent = "100%";
+                setTimeout(() => {
+                    classifyStatus.style.display = "none";
+                }, 400);
+                setFileError(data.error || "Classification failed.");
+                return;
+            }
+
+            classifyBar.style.width = "100%";
+            classifyPct.textContent = "100%";
+            setTimeout(() => {
+                classifyStatus.style.display = "none";
+            }, 400);
+
+            renderResult(data);
+
+        } catch (err) {
+            clearInterval(tick);
+            classifyStatus.style.display = "none";
+            setFileError("Network error: " + err.message);
+        } finally {
+            classifyBtn.disabled = false;
+            classifyBtn.style.opacity = "";
+            classifyBtn.style.cursor = "";
+        }
+    });
+
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#39;");
+    }
+
+    function scoreRow(item, isTop) {
+        const pct = (item.score * 100).toFixed(1);
+        const barColor = isTop ? "#244c36" : "#347650";
+        const rowBg = isTop ? "#f1f8f3" : "transparent";
+        const weight = isTop ? "bold" : "normal";
+        return `
+            <div style="
+                margin-bottom: 10px;
+                padding: ${isTop ? "10px 12px" : "0"};
+                background: ${rowBg};
+                border-radius: 8px;
+            ">
+                <div style="
+                    display: flex;
+                    justify-content: space-between;
+                    font-size: 0.92rem;
+                    margin-bottom: 4px;
+                    font-weight: ${weight};
+                ">
+                    <span style="color: #244c36;">${escapeHtml(item.label)}</span>
+                    <span style="color: #617267;">${pct}%</span>
+                </div>
+                <div style="
+                    height: 8px;
+                    background: #eef6f0;
+                    border-radius: 4px;
+                    overflow: hidden;
+                ">
+                    <div style="
+                        height: 100%;
+                        width: ${pct}%;
+                        background: ${barColor};
+                    "></div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderResult(data) {
+        const topScore = (data.confidence * 100).toFixed(1);
+
+        const rowsHtml = data.scores
+            .map((item, idx) => scoreRow(item, idx === 0))
+            .join("");
+
+        const symptomsHtml = (data.info.symptoms || [])
+            .map(s => `<li style="margin-bottom: 4px;">${escapeHtml(s)}</li>`)
+            .join("");
+
+        resultArea.innerHTML = `
+            <p style="color: #347650; font-weight: bold; margin-bottom: 6px;">
+                RESULT
+            </p>
+            <h2 style="margin: 0 0 4px; font-size: 1.5rem; color: #244c36;">
+                ${escapeHtml(data.predicted_label)}
+            </h2>
+            <p style="margin: 0 0 20px; color: #617267;">
+                Top confidence: <strong>${topScore}%</strong>
+                &nbsp;·&nbsp; ${escapeHtml(data.created_at)}
+            </p>
+
+            <div style="
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                gap: 20px;
+            ">
+                <!-- Left: classification -->
+                <div style="
+                    background: white;
+                    border-radius: 14px;
+                    padding: 20px 22px;
+                    box-shadow: 0 10px 30px rgba(36, 76, 54, 0.08);
+                ">
+                    <h3 style="
+                        margin: 0 0 14px;
+                        font-size: 1.05rem;
+                        color: #244c36;
+                    ">Classification scores</h3>
+                    ${rowsHtml}
+                </div>
+
+                <!-- Right: guidance -->
+                <div style="
+                    background: white;
+                    border-radius: 14px;
+                    padding: 20px 22px;
+                    box-shadow: 0 10px 30px rgba(36, 76, 54, 0.08);
+                ">
+                    <h3 style="
+                        margin: 0 0 10px;
+                        font-size: 1.05rem;
+                        color: #244c36;
+                    ">${escapeHtml(data.info.title)}</h3>
+                    <p style="margin: 0 0 12px; color: #24352a; line-height: 1.65;">
+                        ${escapeHtml(data.info.description)}
+                    </p>
+                    <p style="margin: 0 0 8px; color: #617267;">
+                        <strong>Cause:</strong>
+                        ${escapeHtml(data.info.cause)}
+                    </p>
+                    ${symptomsHtml ? `
+                        <p style="margin: 0 0 4px; color: #617267;">
+                            <strong>Symptoms:</strong>
+                        </p>
+                        <ul style="margin: 0 0 12px 18px; color: #617267;
+                                   line-height: 1.6;">
+                            ${symptomsHtml}
+                        </ul>
+                    ` : ""}
+                    <p style="margin: 0; color: #24352a; line-height: 1.65;">
+                        <strong>Recommendation:</strong>
+                        ${escapeHtml(data.info.recommendation)}
+                    </p>
+                </div>
+            </div>
+
+            <div style="
+                margin-top: 20px;
+                display: flex;
+                gap: 12px;
+                flex-wrap: wrap;
+            ">
+                <a class="button secondary"
+                   href="{{ url_for('history') }}">
+                    View history
+                </a>
+            </div>
+        `;
+
+        resultArea.style.display = "block";
+        resultArea.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+})();
+</script>
+
+{% endblock %}

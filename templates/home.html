@@ -1,4 +1,3 @@
-
 {% extends "base.html" %}
 
 {% block title %}Home | Rose Leaf Classifier{% endblock %}
@@ -24,6 +23,12 @@
         Its predictions are experimental and should not replace
         expert plant-disease diagnosis.
     </p>
+
+    {% if not current_user.is_authenticated %}
+        <p style="margin-top: 30px;">
+            <a class="button" href="{{ url_for('login') }}">Get started</a>
+        </p>
+    {% endif %}
 </section>
 
 {% endblock %}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Login | Rose Leaf Classifier{% endblock %}
+
+{% block content %}
+
+<div class="auth-card">
+    <h1>Welcome back</h1>
+    <p class="subtitle">Log in to continue to your dashboard.</p>
+
+    <form method="POST" action="{{ url_for('login') }}" novalidate>
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input
+                type="email"
+                id="email"
+                name="email"
+                placeholder="you@example.com"
+                required
+                value="{{ request.form.get('email', '') }}"
+            >
+            <div class="field-error" data-error-for="email"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="password">Password</label>
+            <input
+                type="password"
+                id="password"
+                name="password"
+                placeholder="Enter your password"
+                required
+            >
+            <div class="field-error" data-error-for="password"></div>
+        </div>
+
+        <button type="submit" class="button">Log in</button>
+    </form>
+
+    <p class="auth-switch">
+        Don't have an account?
+        <a href="{{ url_for('register') }}">Create one</a>
+    </p>
+</div>
+
+<script>
+    const loginForm = document.querySelector(".auth-card form");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+
+    function setFieldError(input, message) {
+        const errorBox = document.querySelector(
+            `[data-error-for="${input.id}"]`
+        );
+        if (message) {
+            input.classList.add("invalid");
+            errorBox.textContent = message;
+        } else {
+            input.classList.remove("invalid");
+            errorBox.textContent = "";
+        }
+    }
+
+    function validateLogin() {
+        let valid = true;
+        const emailPattern = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+        if (!emailPattern.test(emailInput.value.trim())) {
+            setFieldError(emailInput, "Please enter a valid email address.");
+            valid = false;
+        } else {
+            setFieldError(emailInput, "");
+        }
+
+        if (!passwordInput.value) {
+            setFieldError(passwordInput, "Please enter your password.");
+            valid = false;
+        } else {
+            setFieldError(passwordInput, "");
+        }
+
+        return valid;
+    }
+
+    loginForm.addEventListener("submit", (event) => {
+        if (!validateLogin()) {
+            event.preventDefault();
+        }
+    });
+
+    [emailInput, passwordInput].forEach((input) => {
+        input.addEventListener("input", validateLogin);
+    });
+</script>
+
+{% endblock %}

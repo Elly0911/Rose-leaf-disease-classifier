@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Profile | Rose Leaf Classifier{% endblock %}
+
+{% block content %}
+
+<section style="padding: 40px 0; max-width: 900px; margin: 0 auto;">
+    <p style="color: #347650; font-weight: bold; text-align: center;">
+        YOUR PROFILE
+    </p>
+
+    <h1 style="font-size: clamp(1.8rem, 4vw, 2.6rem); margin-bottom: 8px; text-align: center;">
+        {{ current_user.name }}
+    </h1>
+
+    <p style="color: #617267; line-height: 1.7; margin-top: 0; text-align: center; margin-bottom: 32px;">
+        Manage your account details. You can update your name and password;
+        your email address is fixed.
+    </p>
+
+    {% if errors %}
+        <div class="form-errors" style="margin-bottom: 24px; max-width: 600px; margin-left: auto; margin-right: auto;">
+            <ul>
+                {% for error in errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <!-- Grid Container for Cards -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 24px;">
+        
+        <!-- Account summary (Spans full width) -->
+        <div style="
+            grid-column: 1 / -1;
+            background: white;
+            border-radius: 14px;
+            padding: 24px 32px;
+            box-shadow: 0 10px 30px rgba(36, 76, 54, 0.08);
+        ">
+            <h2 style="margin-top: 0; font-size: 1.15rem; color: #244c36;">Account details</h2>
+            <p style="margin: 8px 0;"><strong>Email:</strong> {{ current_user.email }}</p>
+            <p style="margin: 8px 0; color: #617267;">
+                <strong>Joined:</strong>
+                {{ current_user.created_at.strftime("%B %d, %Y") }}
+            </p>
+        </div>
+
+        <!-- Edit name -->
+        <div style="
+            background: white;
+            border-radius: 14px;
+            padding: 24px 32px;
+            box-shadow: 0 10px 30px rgba(36, 76, 54, 0.08);
+            display: flex;
+            flex-direction: column;
+        ">
+            <h2 style="margin-top: 0; font-size: 1.15rem; color: #244c36;">Update name</h2>
+            <form method="POST" action="{{ url_for('profile') }}" novalidate style="display: flex; flex-direction: column; flex-grow: 1;">
+                <input type="hidden" name="action" value="update_name">
+
+                <div class="form-group" style="flex-grow: 1;">
+                    <label for="name">Name</label>
+                    <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        value="{{ current_user.name }}"
+                        required
+                    >
+                    <div class="field-error" data-error-for="name"></div>
+                </div>
+
+                <button type="submit" class="button" style="align-self: flex-start;">Save name</button>
+            </form>
+        </div>
+
+        <!-- Change password -->
+        <div style="
+            background: white;
+            border-radius: 14px;
+            padding: 24px 32px;
+            box-shadow: 0 10px 30px rgba(36, 76, 54, 0.08);
+        ">
+            <h2 style="margin-top: 0; font-size: 1.15rem; color: #244c36;">Change password</h2>
+            <form method="POST" action="{{ url_for('profile') }}" novalidate id="password-form">
+                <input type="hidden" name="action" value="update_password">
+
+                <div class="form-group">
+                    <label for="current_password">Current password</label>
+                    <input
+                        type="password"
+                        id="current_password"
+                        name="current_password"
+                        placeholder="Enter current password"
+                        required
+                    >
+                    <div class="field-error" data-error-for="current_password"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="new_password">New password</label>
+                    <input
+                        type="password"
+                        id="new_password"
+                        name="new_password"
+                        placeholder="At least 8 characters"
+                        required
+                        minlength="8"
+                    >
+                    <div class="field-error" data-error-for="new_password"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirm_password">Confirm new password</label>
+                    <input
+                        type="password"
+                        id="confirm_password"
+                        name="confirm_password"
+                        placeholder="Re-enter new password"
+                        required
+                        minlength="8"
+                    >
+                    <div class="field-error" data-error-for="confirm_password"></div>
+                </div>
+
+                <button type="submit" class="button">Update password</button>
+            </form>
+        </div>
+    </div>
+</section>
+
+<script>
+    // ---- Name form validation ----
+    const nameInput = document.getElementById("name");
+
+    function setFieldError(input, message) {
+        const errorBox = document.querySelector(
+            `[data-error-for="${input.id}"]`
+        );
+        if (!errorBox) return;
+        if (message) {
+            input.classList.add("invalid");
+            errorBox.textContent = message;
+        } else {
+            input.classList.remove("invalid");
+            errorBox.textContent = "";
+        }
+    }
+
+    if (nameInput) {
+        nameInput.addEventListener("input", () => {
+            setFieldError(nameInput, nameInput.value.trim()
+                ? ""
+                : "Please enter your name.");
+        });
+        nameInput.form.addEventListener("submit", (event) => {
+            if (!nameInput.value.trim()) {
+                setFieldError(nameInput, "Please enter your name.");
+                event.preventDefault();
+            }
+        });
+    }
+
+    // ---- Password form validation ----
+    const passwordForm = document.getElementById("password-form");
+    if (passwordForm) {
+        const currentInput = document.getElementById("current_password");
+        const newInput = document.getElementById("new_password");
+        const confirmInput = document.getElementById("confirm_password");
+
+        function validatePasswordForm() {
+            let valid = true;
+
+            if (!currentInput.value) {
+                setFieldError(
+                    currentInput,
+                    "Please enter your current password."
+                );
+                valid = false;
+            } else {
+                setFieldError(currentInput, "");
+            }
+
+            if (newInput.value.length < 8) {
+                setFieldError(
+                    newInput,
+                    "New password must be at least 8 characters long."
+                );
+                valid = false;
+            } else {
+                setFieldError(newInput, "");
+            }
+
+            if (confirmInput.value !== newInput.value) {
+                setFieldError(confirmInput, "New passwords do not match.");
+                valid = false;
+            } else {
+                setFieldError(confirmInput, "");
+            }
+
+            return valid;
+        }
+
+        passwordForm.addEventListener("submit", (event) => {
+            if (!validatePasswordForm()) {
+                event.preventDefault();
+            }
+        });
+
+        [currentInput, newInput, confirmInput].forEach((input) => {
+            input.addEventListener("input", validatePasswordForm);
+        });
+    }
+</script>
+
+{% endblock %}

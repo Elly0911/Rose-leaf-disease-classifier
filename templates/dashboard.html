@@ -2,105 +2,385 @@
 
 {% block title %}Dashboard | Rose Leaf Classifier{% endblock %}
 
-{% block content %}
+{% block head_extra %}
+<style>
+    .dashboard-page {
+        padding: 10px 0 28px;
+    }
 
-{% set labels = DISPLAY_NAMES if DISPLAY_NAMES is defined else {} %}
+    .dashboard-intro h1 {
+        font-size: clamp(1.9rem, 4vw, 2.7rem);
+        margin: 12px 0 10px;
+        overflow-wrap: anywhere;
+    }
 
-<section style="padding: 40px 0;">
-    <p style="color: #347650; font-weight: bold;">CLASSIFICATION DASHBOARD</p>
+    .dashboard-intro > p:last-child {
+        max-width: 680px;
+        margin-bottom: 28px;
+        line-height: 1.8;
+    }
 
-    <h1 style="font-size: clamp(1.8rem, 4vw, 2.6rem); margin-bottom: 8px;">
-        Hello, {{ current_user.name }}
-    </h1>
+    /* Green accent on the main dashboard card */
+    .dashboard-intro.page-card {
+        border: 1px solid #d8e7dc;
+        border-left: 5px solid #347650;
+        border-radius: 17px;
+        background: linear-gradient(120deg, #ffffff, #f5faf6);
+        box-shadow: 0 10px 28px rgba(36, 76, 54, .08);
+    }
 
-    <p style="color: #617267; line-height: 1.7; margin-top: 0;">
-        Upload a rose leaf image to run a classification, and review
-        your previous predictions below.
-    </p>
-
-    <div style="
-        margin-top: 28px;
-        background: white;
-        border-radius: 14px;
-        padding: 26px;
-        box-shadow: 0 10px 30px rgba(36, 76, 54, 0.08);
+    .dashboard-cta {
         display: flex;
-        flex-wrap: wrap;
-        gap: 18px;
         align-items: center;
         justify-content: space-between;
-    ">
-        <div>
-            <h2 style="margin: 0 0 6px; font-size: 1.2rem;">New prediction</h2>
-            <p style="margin: 0; color: #617267; line-height: 1.6;">
-                Upload a single rose leaf photograph to classify its condition.
-            </p>
+        flex-wrap: wrap;
+        gap: 18px;
+        padding: 22px;
+        background: #f7faf7;
+        border: 1px solid #cfe1d3;
+        border-left: 4px solid #347650;
+        border-radius: 14px;
+        box-shadow: 0 5px 15px rgba(36, 76, 54, .04);
+        transition: border-color .2s ease, box-shadow .2s ease;
+    }
+
+    .dashboard-cta:hover {
+        border-color: #91b99b;
+        box-shadow: 0 8px 20px rgba(36, 76, 54, .08);
+    }
+
+    .dashboard-cta h2 {
+        margin: 0 0 8px;
+        color: #244c36;
+        font-size: 1.2rem;
+    }
+
+    .dashboard-cta p {
+        margin: 0;
+        line-height: 1.7;
+    }
+
+    .activity-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin: 32px 0 16px;
+    }
+
+    .activity-heading h2 {
+        margin: 0;
+        font-size: 1.5rem;
+    }
+
+    .history-link {
+        color: #347650;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .history-link:hover {
+        text-decoration: underline;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+        gap: 18px;
+    }
+
+
+ 
+    /* Recent prediction cards: clean border with green hover outline */
+    .dashboard-card {
+        position: relative;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        color: inherit;
+        text-decoration: none;
+        background: linear-gradient(145deg, #ffffff, #f9fcf9);
+        border: 1px solid #d5e5d9;
+        border-radius: 15px;
+        box-shadow: 0 7px 21px rgba(36, 76, 54, .07);
+        transition:
+            transform .18s ease,
+            box-shadow .18s ease,
+            border-color .18s ease,
+            outline-color .18s ease;
+    }
+
+
+    .dashboard-card:hover,
+    .dashboard-card:focus-visible {
+        transform: translateY(-3px);
+        border: 2px solid #347650;
+        outline: none;
+        box-shadow: 0 13px 28px rgba(36, 76, 54, .13);
+    }
+
+
+    .dashboard-image-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 180px;
+        padding: 10px;
+        overflow: hidden;
+        background: linear-gradient(145deg, #eff6f0, #ffffff);
+        border-bottom: 1px solid #e0ebe2;
+    }
+
+    .dashboard-image {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        object-position: center;
+        border-radius: 7px;
+    }
+
+    .dashboard-image-placeholder {
+        display: grid;
+        place-items: center;
+        width: 100%;
+        height: 100%;
+        color: #789080;
+        font-size: .9rem;
+    }
+
+    .dashboard-card-body {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        padding: 15px 16px 16px;
+    }
+
+    .dashboard-result-label {
+        margin: 0 0 9px;
+        color: #244c36;
+        font-size: 1rem;
+        font-weight: 800;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+
+    .dashboard-confidence {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 10px;
+        color: #347650;
+        font-size: .87rem;
+    }
+
+    .confidence-pill {
+        display: inline-block;
+        padding: 4px 8px;
+        border: 1px solid #c9dfcf;
+        border-radius: 20px;
+        background: #eaf5ed;
+        color: #244c36;
+        font-size: .82rem;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .dashboard-date {
+        margin: auto 0 0;
+        padding-top: 10px;
+        color: #718075;
+        font-size: .82rem;
+        line-height: 1.5;
+    }
+
+    .dashboard-card-link {
+        margin-top: 13px;
+        padding-top: 11px;
+        border-top: 1px solid #dfe9e1;
+        color: #347650;
+        font-size: .87rem;
+        font-weight: 800;
+    }
+
+    /* Empty state also gets the same green accent */
+    .dashboard-empty {
+        padding: 36px 24px;
+        text-align: center;
+        background: linear-gradient(145deg, #ffffff, #f6faf7);
+        border: 1px solid #d5e5d9;
+        border-left: 5px solid #347650;
+        border-radius: 16px;
+        box-shadow: 0 8px 24px rgba(36, 76, 54, .07);
+    }
+
+    .dashboard-empty h3 {
+        margin-top: 0;
+        color: #244c36;
+    }
+
+    .dashboard-empty p {
+        line-height: 1.7;
+    }
+
+    @media (max-width: 520px) {
+        .dashboard-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .dashboard-image-wrap {
+            height: 145px;
+            padding: 7px;
+        }
+
+        .dashboard-card-body {
+            padding: 12px;
+        }
+
+        .dashboard-result-label {
+            font-size: .92rem;
+        }
+
+        .dashboard-confidence {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .dashboard-cta {
+            padding: 18px;
+        }
+    }
+
+    @media (max-width: 350px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .dashboard-image-wrap {
+            height: 190px;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .dashboard-card,
+        .dashboard-cta {
+            transition: none;
+        }
+
+        .dashboard-card:hover {
+            transform: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set labels = DISPLAY_NAMES if DISPLAY_NAMES is defined else {} %}
+
+<section class="dashboard-page">
+    <div class="page-card dashboard-intro">
+        <p class="eyebrow">Classification dashboard</p>
+
+        <h1>Hello, {{ current_user.name }}</h1>
+
+        <p class="muted">
+            Welcome to your rose leaf classification workspace. Upload a
+            photograph to explore the model's prediction, or revisit images
+            you have classified before.
+        </p>
+
+        <div class="dashboard-cta">
+            <div>
+                <h2>Ready to classify a leaf?</h2>
+                <p class="muted">
+                    Choose a clear image of one rose leaf to get started.
+                </p>
+            </div>
+
+            <a class="button" href="{{ url_for('classify') }}">
+                Classify an image
+            </a>
         </div>
-        <a class="button" href="{{ url_for('predict') }}">Upload image</a>
     </div>
 
-    <div style="
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        margin-top: 40px;
-    ">
-        <h2 style="margin: 0; font-size: 1.25rem;">Previous predictions</h2>
-        <a href="{{ url_for('history') }}"
-           style="color: #347650; font-weight: bold; text-decoration: none;">
-            View all
+    <div class="activity-heading">
+        <div>
+            <p class="eyebrow" style="margin-bottom:8px;">Your activity</p>
+            <h2>Recent predictions</h2>
+        </div>
+
+        <a class="history-link" href="{{ url_for('history') }}">
+            View all history →
         </a>
     </div>
 
     {% if predictions and predictions|length > 0 %}
-        <div style="
-            margin-top: 16px;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 18px;
-        ">
+        <div class="dashboard-grid">
             {% for prediction in predictions %}
-                {% set label = labels.get(prediction.predicted_class, prediction.predicted_class) %}
-                <a
-                    href="{{ url_for('result', prediction_id=prediction.id) }}"
-                    style="
-                        text-decoration: none;
-                        color: inherit;
-                        background: white;
-                        border-radius: 14px;
-                        padding: 20px;
-                        box-shadow: 0 8px 24px rgba(36, 76, 54, 0.06);
-                        display: block;
-                    "
-                >
-                    <p style="margin: 0 0 6px; font-weight: bold; color: #244c36;">
-                        {{ label }}
-                    </p>
-                    <p style="margin: 0; color: #347650; font-size: 0.9rem;">
-                        Confidence: {{ "%.1f"|format(prediction.confidence * 100) }}%
-                    </p>
-                    <p style="margin: 8px 0 0; color: #617267; font-size: 0.85rem;">
-                        {{ prediction.created_at.strftime("%b %d, %Y · %H:%M") }}
-                    </p>
+                {% set label = labels.get(
+                    prediction.predicted_class,
+                    prediction.predicted_class
+                ) %}
+
+                <a class="dashboard-card"
+                   href="{{ url_for('result', prediction_id=prediction.id) }}"
+                   aria-label="View result for {{ label }}">
+
+                    <div class="dashboard-image-wrap">
+                        {% if prediction.image_filename %}
+                            <img
+                                class="dashboard-image"
+                                src="{{ url_for(
+                                    'uploaded_file',
+                                    filename=prediction.image_filename
+                                ) }}"
+                                alt="Previously classified rose leaf"
+                                loading="lazy"
+                            >
+                        {% else %}
+                            <div class="dashboard-image-placeholder">
+                                No image available
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="dashboard-card-body">
+                        <p class="dashboard-result-label">{{ label }}</p>
+
+                        <div class="dashboard-confidence">
+                            <span>Confidence</span>
+                            <span class="confidence-pill">
+                                {{ "%.1f"|format(prediction.confidence * 100) }}%
+                            </span>
+                        </div>
+
+                        <p class="dashboard-date">
+                            {{ prediction.created_at.strftime("%b %d, %Y · %H:%M") }}
+                        </p>
+
+                        <div class="dashboard-card-link">
+                            View result <span aria-hidden="true">→</span>
+                        </div>
+                    </div>
                 </a>
             {% endfor %}
         </div>
     {% else %}
-        <div style="
-            margin-top: 16px;
-            background: #eef6f0;
-            border: 1px dashed #b7d9c4;
-            border-radius: 14px;
-            padding: 30px 26px;
-            color: #3a5a47;
-            text-align: center;
-        ">
-            <h3 style="margin-top: 0; font-size: 1.1rem;">No predictions yet</h3>
-            <p style="margin: 0; line-height: 1.7;">
-                Upload your first rose leaf image to see results here.
+        <div class="dashboard-empty">
+            <h3>No predictions yet</h3>
+            <p class="muted">
+                Your previous classifications will appear here.
             </p>
+            <a class="button" href="{{ url_for('classify') }}">
+                Classify your first leaf
+            </a>
         </div>
     {% endif %}
 </section>
-
 {% endblock %}

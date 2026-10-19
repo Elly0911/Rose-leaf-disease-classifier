@@ -1,78 +1,335 @@
+
 {% extends "base.html" %}
 
 {% block title %}Result | Rose Leaf Classifier{% endblock %}
 
-{% block content %}
-
+{% block head_extra %}
 <style>
+    .result-page {
+        padding: 14px 0 34px;
+    }
+
+    /* Main result heading with a clear green outline */
+    .result-header {
+        position: relative;
+        padding: clamp(20px, 3vw, 28px);
+        margin-bottom: 22px;
+        border: 2px solid #b9d5c0;
+        border-left: 6px solid #347650;
+        border-radius: 18px;
+        background: linear-gradient(120deg, #ffffff, #f0f8f2);
+        box-shadow:
+            0 10px 26px rgba(36, 76, 54, .08),
+            0 0 0 3px rgba(52, 118, 80, .045);
+        transition: box-shadow .2s ease, border-color .2s ease;
+    }
+
+    .result-header:hover {
+        border-color: #8db79a;
+        box-shadow:
+            0 13px 30px rgba(36, 76, 54, .11),
+            0 0 0 4px rgba(52, 118, 80, .07);
+    }
+
+    .result-eyebrow {
+        margin: 0;
+        color: #347650;
+        font-size: .85rem;
+        font-weight: 800;
+        letter-spacing: .08em;
+    }
+
+    .result-title {
+        margin: 10px 0 7px;
+        color: #24352a;
+        font-size: clamp(1.8rem, 4vw, 2.5rem);
+        line-height: 1.2;
+        overflow-wrap: anywhere;
+    }
+
+    .result-meta {
+        margin: 0;
+        color: #617267;
+        line-height: 1.7;
+        font-size: .94rem;
+    }
+
+    /* Responsive score and disease-information cards */
+    .result-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: stretch;
+        gap: 20px;
+    }
+
+    .result-panel {
+        min-width: 0;
+        padding: clamp(18px, 2.5vw, 25px);
+        background: linear-gradient(145deg, #ffffff, #f9fcf9);
+        border: 2px solid #c7dccb;
+        border-radius: 17px;
+        box-shadow:
+            0 9px 24px rgba(36, 76, 54, .07),
+            0 0 0 2px rgba(52, 118, 80, .025);
+        transition:
+            border-color .2s ease,
+            box-shadow .2s ease,
+            transform .2s ease;
+    }
+
+    .result-panel:hover {
+        border-color: #8db79a;
+        box-shadow:
+            0 13px 28px rgba(36, 76, 54, .11),
+            0 0 0 3px rgba(52, 118, 80, .06);
+        transform: translateY(-2px);
+    }
+
+    .result-panel h2 {
+        margin: 0 0 17px;
+        padding-bottom: 12px;
+        color: #244c36;
+        border-bottom: 1px solid #dfeae1;
+        font-size: 1.1rem;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+
+    /* Classification scores */
     .score-row {
-        margin-bottom: 10px;
-        border-radius: 8px;
+        margin-bottom: 13px;
+        padding: 8px 9px;
+        border: 1px solid transparent;
+        border-radius: 9px;
     }
+
+    .score-row:last-child {
+        margin-bottom: 0;
+    }
+
     .score-row.top {
-        padding: 10px 12px;
-        background: #f1f8f3;
+        padding: 11px 12px;
+        background: #eff7f1;
+        border-color: #c5ddcb;
     }
-    .score-row .score-head {
+
+    .score-head {
         display: flex;
+        align-items: baseline;
         justify-content: space-between;
-        font-size: 0.92rem;
-        margin-bottom: 4px;
+        gap: 12px;
+        margin-bottom: 7px;
+        font-size: .9rem;
     }
-    .score-row .score-head .score-label {
+
+    .score-label {
+        color: #244c36;
+        overflow-wrap: anywhere;
+    }
+
+    .score-value {
+        flex-shrink: 0;
+        color: #617267;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .score-row.top .score-head {
+        font-weight: 800;
+    }
+
+    .score-row.top .score-value {
         color: #244c36;
     }
-    .score-row .score-head .score-value {
-        color: #617267;
-    }
-    .score-row.top .score-head {
-        font-weight: bold;
-    }
+
     .score-track {
+        width: 100%;
         height: 8px;
-        background: #eef6f0;
-        border-radius: 4px;
         overflow: hidden;
+        background: #e8f0e9;
+        border-radius: 99px;
     }
+
     .score-fill {
         height: 100%;
         width: 0;
         background: #347650;
+        border-radius: 99px;
+        transition: width .35s ease;
     }
+
     .score-row.top .score-fill {
         background: #244c36;
     }
-</style>
 
-<section style="padding: 40px 0;">
-    <p style="color: #347650; font-weight: bold;">CLASSIFICATION RESULT</p>
+    /* Disease information */
+    .guidance-text {
+        color: #42584a;
+        font-size: .94rem;
+        line-height: 1.75;
+        overflow-wrap: anywhere;
+    }
 
-    <h1 style="font-size: clamp(1.8rem, 4vw, 2.6rem); margin-bottom: 4px;">
-        {{ predicted_label }}
-    </h1>
+    .guidance-text p {
+        margin: 0 0 13px;
+    }
 
-    <p style="color: #617267; line-height: 1.7; margin-top: 0;">
-        Top confidence:
-        <strong>{{ "%.1f"|format(prediction.confidence * 100) }}%</strong>
-        &nbsp;·&nbsp; {{ prediction.created_at.strftime("%b %d, %Y · %H:%M") }}
-    </p>
+    .guidance-text p:last-child {
+        margin-bottom: 0;
+    }
 
-    <div style="
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-        gap: 22px;
-        margin-top: 24px;
-    ">
-        <!-- Left: classification -->
-        <div style="
-            background: white;
+    .guidance-text ul {
+        margin: 5px 0 15px;
+        padding-left: 22px;
+    }
+
+    .guidance-text li {
+        margin-bottom: 6px;
+    }
+
+    /* Uploaded image card */
+    .uploaded-panel {
+        margin-top: 20px;
+        padding: clamp(18px, 2.5vw, 25px);
+        border-color: #b9d5c0;
+        background: linear-gradient(145deg, #ffffff, #f5faf6);
+    }
+
+    .uploaded-panel h2 {
+        margin-bottom: 15px;
+    }
+
+    .uploaded-image-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        min-height: 180px;
+        max-height: 440px;
+        padding: 14px;
+        overflow: hidden;
+        background: radial-gradient(ellipse at center, #ffffff, #edf5ef);
+        border: 2px solid #c8dfce;
+        border-radius: 13px;
+    }
+
+    .uploaded-image {
+        display: block;
+        width: auto;
+        max-width: 100%;
+        height: auto;
+        max-height: 380px;
+        object-fit: contain;
+        object-position: center;
+        border-radius: 9px;
+    }
+
+    /* Navigation buttons */
+    .result-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 22px;
+    }
+
+    .result-actions .button {
+        font-weight: 700;
+    }
+
+    .result-actions .button:focus-visible {
+        outline: 3px solid rgba(52, 118, 80, .35);
+        outline-offset: 3px;
+    }
+
+    /* Tablet and mobile layouts */
+    @media (max-width: 720px) {
+        .result-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+        }
+
+        .result-panel:hover {
+            transform: none;
+        }
+
+        .uploaded-image-wrap {
+            min-height: 140px;
+        }
+
+        .uploaded-image {
+            max-height: 320px;
+        }
+    }
+
+    @media (max-width: 520px) {
+        .result-page {
+            padding: 8px 0 26px;
+        }
+
+        .result-header {
+            padding: 18px;
+            border-radius: 15px;
+        }
+
+        .result-panel {
+            padding: 17px;
             border-radius: 14px;
-            padding: 22px;
-            box-shadow: 0 10px 30px rgba(36, 76, 54, 0.08);
-        ">
-            <h2 style="margin-top: 0; font-size: 1.1rem; color: #244c36;">
-                Classification scores
-            </h2>
+        }
+
+        .result-actions {
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .result-actions .button {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .uploaded-image {
+            max-height: 280px;
+        }
+
+        .score-head {
+            font-size: .87rem;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .result-header,
+        .result-panel,
+        .score-fill {
+            transition: none;
+        }
+
+        .result-header:hover,
+        .result-panel:hover {
+            transform: none;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="result-page">
+
+    <header class="result-header">
+        <p class="result-eyebrow">CLASSIFICATION RESULT</p>
+
+        <h1 class="result-title">{{ predicted_label }}</h1>
+
+        <p class="result-meta">
+            Top confidence:
+            <strong>{{ "%.1f"|format(prediction.confidence * 100) }}%</strong>
+            &nbsp;·&nbsp;
+            {{ prediction.created_at.strftime("%b %d, %Y · %H:%M") }}
+        </p>
+    </header>
+
+    <div class="result-grid">
+
+        <!-- Classification scores -->
+        <section class="result-panel">
+            <h2>Classification scores</h2>
 
             {% for key, label, score in ordered_scores %}
                 <div class="score-row {{ 'top' if loop.first else '' }}">
@@ -82,78 +339,87 @@
                             {{ "%.1f"|format(score * 100) }}%
                         </span>
                     </div>
+
                     <div class="score-track">
-                        <div class="score-fill"
-                             data-width="{{ (score * 100)|round(1) }}">
+                        <div
+                            class="score-fill"
+                            data-width="{{ (score * 100)|round(1) }}">
                         </div>
                     </div>
                 </div>
             {% endfor %}
-        </div>
+        </section>
 
-        <!-- Right: guidance -->
-        <div style="
-            background: white;
-            border-radius: 14px;
-            padding: 22px;
-            box-shadow: 0 10px 30px rgba(36, 76, 54, 0.08);
-        ">
-            <h2 style="margin-top: 0; font-size: 1.1rem; color: #244c36;">
-                {{ info.title }}
-            </h2>
-            <p style="margin: 0 0 12px; color: #24352a; line-height: 1.65;">
-                {{ info.description }}
-            </p>
-            <p style="margin: 0 0 8px; color: #617267;">
-                <strong>Cause:</strong> {{ info.cause }}
-            </p>
-            {% if info.symptoms %}
-                <p style="margin: 0 0 4px; color: #617267;">
-                    <strong>Symptoms:</strong>
+        <!-- Disease information -->
+        <section class="result-panel">
+            <h2>{{ info.title }}</h2>
+
+            <div class="guidance-text">
+                <p>{{ info.description }}</p>
+
+                <p>
+                    <strong>Cause:</strong>
+                    {{ info.cause }}
                 </p>
-                <ul style="margin: 0 0 12px 18px; color: #617267; line-height: 1.6;">
-                    {% for s in info.symptoms %}
-                        <li style="margin-bottom: 4px;">{{ s }}</li>
-                    {% endfor %}
-                </ul>
-            {% endif %}
-            <p style="margin: 0; color: #24352a; line-height: 1.65;">
-                <strong>Recommendation:</strong> {{ info.recommendation }}
-            </p>
+
+                {% if info.symptoms %}
+                    <p><strong>Symptoms</strong></p>
+
+                    <ul>
+                        {% for symptom in info.symptoms %}
+                            <li>{{ symptom }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+
+                <p>
+                    <strong>Recommendation:</strong>
+                    {{ info.recommendation }}
+                </p>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Uploaded image -->
+    <section class="result-panel uploaded-panel">
+        <h2>Uploaded image</h2>
+
+        <div class="uploaded-image-wrap">
+            <img
+                class="uploaded-image"
+                src="{{ url_for(
+                    'uploaded_file',
+                    filename=prediction.image_filename
+                ) }}"
+                alt="Uploaded rose leaf classified as {{ predicted_label }}"
+                loading="eager"
+            >
         </div>
+    </section>
+
+    <!-- Result navigation -->
+    <div class="result-actions">
+        <a class="button" href="{{ url_for('classify') }}">
+            Classify another
+        </a>
+
+        <a class="button secondary" href="{{ url_for('history') }}">
+            View history
+        </a>
     </div>
 
-    <!-- Image -->
-    <div style="
-        margin-top: 24px;
-        background: white;
-        border-radius: 14px;
-        padding: 20px;
-        box-shadow: 0 10px 30px rgba(36, 76, 54, 0.08);
-    ">
-        <h2 style="margin-top: 0; font-size: 1.1rem; color: #244c36;">
-            Uploaded image
-        </h2>
-        <img
-            src="{{ url_for('uploaded_file', filename=prediction.image_filename) }}"
-            alt="Uploaded rose leaf"
-            style="max-width: 100%; border-radius: 10px; display: block;"
-        >
-    </div>
-
-    <div style="margin-top: 24px; display: flex; gap: 12px; flex-wrap: wrap;">
-        <a class="button" href="{{ url_for('predict') }}">Classify another</a>
-        <a class="button secondary" href="{{ url_for('history') }}">View history</a>
-    </div>
 </section>
+{% endblock %}
 
+{% block scripts %}
 <script>
-    document.querySelectorAll(".score-fill[data-width]").forEach(function (el) {
-        var w = parseFloat(el.getAttribute("data-width"));
-        if (!isNaN(w)) {
-            el.style.width = Math.max(0, Math.min(100, w)) + "%";
+    document.querySelectorAll(".score-fill[data-width]").forEach((bar) => {
+        const width = Number.parseFloat(bar.dataset.width);
+
+        if (Number.isFinite(width)) {
+            bar.style.width = Math.max(0, Math.min(100, width)) + "%";
         }
     });
 </script>
-
 {% endblock %}

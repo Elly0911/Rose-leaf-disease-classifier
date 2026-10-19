@@ -1,20 +1,3 @@
-"""
-Model loading and inference helper.
-
-Place your trained model at:
-    models/rose_hybrid_model_final2_best.keras
-
-The model is loaded once and cached for the lifetime of the process.
-
-Notes
------
-The saved `.keras` file was created with a Lambda layer that wraps
-`tensorflow.keras.applications.vgg16.preprocess_input`. Keras 3 does
-not know how to resolve that bare name on load, so we provide it via
-`custom_objects`. Any other custom callables referenced by the model
-can be added to `CUSTOM_OBJECTS` below.
-"""
-
 from tensorflow.keras.applications.vgg16 import (  # type: ignore[import]
     preprocess_input as vgg16_preprocess_input,
 )
@@ -35,11 +18,7 @@ MODEL_PATH = os.path.join(
 
 IMAGE_SIZE = (224, 224)
 
-
-# ---------------------------------------------------------------------
 # Custom objects required to deserialize the saved model.
-# Add here if Keras later complains about another symbol.
-# ---------------------------------------------------------------------
 def _build_custom_objects():
     """Return dict of custom_objects needed by keras.load_model()."""
     from tensorflow.keras.applications.vgg16 import ( # type: ignore
@@ -51,18 +30,7 @@ def _build_custom_objects():
         "preprocess_input": vgg16_preprocess_input,
     }
 
-    # Some .keras files saved with `keras.applications` use the module
-    # path "<app>.preprocess_input"; registering the plain name above
-    # covers those. If your model references `keras_hub` presets or
-    # custom ViT blocks, import them here so Keras can resolve them:
-    #
-    # try:
-    #     import keras_hub  # noqa: F401  # registers keras_hub layers
-    # except Exception:
-    #     pass
-
     return custom
-
 
 def _import_ml_stack():
     global _model_load_error
@@ -75,7 +43,6 @@ def _import_ml_stack():
             f"Original error: {exc}"
         )
         raise RuntimeError(_model_load_error) from exc
-
 
 def load_model():
     """Load and cache the Keras model."""
@@ -115,12 +82,9 @@ def load_model():
         )
         raise RuntimeError(_model_load_error) from exc
 
-
 # Convenience alias so both names work.
 def get_model():
     return load_model()
-
-
 
 def preprocess_image(image_path):
     """Load and prepare an image for the model."""
@@ -128,8 +92,6 @@ def preprocess_image(image_path):
     img = img.resize(IMAGE_SIZE)
     arr = np.asarray(img, dtype="float32")
     return np.expand_dims(arr, axis=0)
-
-
 
 def predict_image(image_path):
     """

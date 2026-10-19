@@ -116,7 +116,6 @@ DISEASE_INFO = {
     },
 }
 
-
 # Ordered list matching the model's output index.
 CLASS_NAMES = [
     "Black Spot",
@@ -125,7 +124,6 @@ CLASS_NAMES = [
     "Insect Hole",
     "ROSE_MOSAIC",
 ]
-
 
 # Display names for UI — keeps internal class keys stable while
 # presenting human-friendly labels to the user.

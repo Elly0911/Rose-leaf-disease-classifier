@@ -1,25 +1,10 @@
 import os
 import re
 import uuid
+import json
 
-from flask import (
-    Flask,
-    render_template,
-    redirect,
-    url_for,
-    request,
-    flash,
-    send_from_directory,
-    abort,
-    jsonify,
-)
-from flask_login import (
-    LoginManager,
-    login_user,
-    logout_user,
-    login_required,
-    current_user,
-)
+from flask import (Flask, render_template, redirect, url_for, request, flash, send_from_directory, abort, jsonify,)
+from flask_login import ( LoginManager, login_user, logout_user, login_required, current_user,)
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 
@@ -55,7 +40,6 @@ login_manager.login_view = "login"
 login_manager.login_message = "Please log in to access your dashboard."
 login_manager.login_message_category = "error"
 
-
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, int(user_id))
@@ -64,10 +48,7 @@ def load_user(user_id):
 with app.app_context():
     db.create_all()
 
-
-# -----------------------------
-# Validation helpers
-# -----------------------------
+# Validation Checks
 EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
@@ -90,14 +71,10 @@ def allowed_file(filename):
         and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
     )
 
-
-# -----------------------------
 # Auth routes
-# -----------------------------
 @app.route("/")
 def home():
     return render_template("home.html")
-
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -139,7 +116,6 @@ def register():
 
     return render_template("register.html", errors=errors)
 
-
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
@@ -170,7 +146,6 @@ def login():
 
     return render_template("login.html")
 
-
 @app.route("/logout")
 @login_required
 def logout():
@@ -178,10 +153,7 @@ def logout():
     flash("You have been logged out.", "success")
     return redirect(url_for("home"))
 
-
-# -----------------------------
 # Dashboard / profile
-# -----------------------------
 @app.route("/dashboard")
 @login_required
 def dashboard():
@@ -198,7 +170,6 @@ def dashboard():
         predictions=predictions,
         DISPLAY_NAMES=DISPLAY_NAMES,
     )
-
 
 @app.route("/profile", methods=["GET", "POST"])
 @login_required
@@ -245,15 +216,11 @@ def profile():
 
     return render_template("profile.html", errors=errors)
 
-
-# -----------------------------
-# Classification
-# -----------------------------
-@app.route("/predict", methods=["GET"])
+# Rose Leaf Disease Classifier
+@app.route("/classify", methods=["GET"])
 @login_required
-def predict():
-    return render_template("predict.html")
-
+def classify():
+    return render_template("classify.html")
 
 @app.route("/api/classify", methods=["POST"])
 @login_required
@@ -300,6 +267,15 @@ def api_classify():
     )
     db.session.add(prediction)
     db.session.commit()
+
+    # Save all classification scores so the result page can display them later without running the model a second time.
+    scores_path = os.path.join(
+        app.config["UPLOAD_FOLDER"],
+        unique_name + ".scores.json",
+    )
+
+    with open(scores_path, "w", encoding="utf-8") as scores_file:
+        json.dump(result["scores"], scores_file)
 
     from utils.disease_info import (
         DISPLAY_NAMES,
@@ -359,12 +335,13 @@ def api_classify():
         ),
     })
 
-
 @app.route("/result/<int:prediction_id>")
 @login_required
 def result(prediction_id):
-    """Standalone result page (used from dashboard/history links)."""
+    """Display a saved prediction without rerunning model inference."""
     prediction = db.session.get(Prediction, prediction_id)
+
+    # Users can only view their own predictions.
     if not prediction or prediction.user_id != current_user.id:
         abort(404)
 
@@ -374,36 +351,43 @@ def result(prediction_id):
         get_disease_info,
     )
 
-    info = get_disease_info(prediction.predicted_class)
+    predicted_key = prediction.predicted_class
+    info = get_disease_info(predicted_key)
 
-    # Try to recompute full scores from stored image.
+    # Load saved scores instead of running predict_image() again.
+    scores_path = os.path.join(
+        app.config["UPLOAD_FOLDER"],
+        prediction.image_filename + ".scores.json",
+    )
+
     ordered_scores = []
+
     try:
-        from utils.classifier import predict_image
-        image_path = os.path.join(
-            app.config["UPLOAD_FOLDER"], prediction.image_filename
-        )
-        scores = predict_image(image_path)["scores"]
-        predicted_key = prediction.predicted_class
+        with open(scores_path, "r", encoding="utf-8") as scores_file:
+            scores = json.load(scores_file)
+
+        # Display the predicted class first.
         ordered_scores.append((
             predicted_key,
             DISPLAY_NAMES.get(predicted_key, predicted_key),
             float(scores.get(predicted_key, prediction.confidence)),
         ))
+
+        # Follow with the remaining classes in the model's class order.
         for name in CLASS_NAMES:
             if name == predicted_key:
                 continue
+
             ordered_scores.append((
                 name,
                 DISPLAY_NAMES.get(name, name),
                 float(scores.get(name, 0.0)),
             ))
-    except Exception:
+
+    except (OSError, ValueError, TypeError):
         ordered_scores = [(
-            prediction.predicted_class,
-            DISPLAY_NAMES.get(
-                prediction.predicted_class, prediction.predicted_class
-            ),
+            predicted_key,
+            DISPLAY_NAMES.get(predicted_key, predicted_key),
             prediction.confidence,
         )]
 
@@ -412,11 +396,10 @@ def result(prediction_id):
         prediction=prediction,
         info=info,
         predicted_label=DISPLAY_NAMES.get(
-            prediction.predicted_class, prediction.predicted_class
+            predicted_key, predicted_key
         ),
         ordered_scores=ordered_scores,
     )
-
 
 @app.route("/history")
 @login_required
@@ -434,7 +417,6 @@ def history():
         DISPLAY_NAMES=DISPLAY_NAMES,
     )
 
-
 @app.route("/uploads/<path:filename>")
 @login_required
 def uploaded_file(filename):
@@ -449,7 +431,6 @@ def uploaded_file(filename):
         app.config["UPLOAD_FOLDER"], safe_name
     )
 
-
 @app.errorhandler(413)
 def too_large(_error):
     if request.path.startswith("/api/"):
@@ -458,8 +439,7 @@ def too_large(_error):
             413,
         )
     flash("That image is too large. Maximum size is 8 MB.", "error")
-    return redirect(url_for("predict")), 303
-
+    return redirect(url_for("classify")), 303
 
 if __name__ == "__main__":
     app.run(debug=True)

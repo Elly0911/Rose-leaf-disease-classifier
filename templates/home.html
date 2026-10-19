@@ -2,33 +2,267 @@
 
 {% block title %}Home | Rose Leaf Classifier{% endblock %}
 
+{% block head_extra %}
+<style>
+    .home-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 0.95fr);
+        align-items: center;
+        gap: clamp(32px, 5vw, 64px);
+        min-height: 590px;
+        padding: 24px 0 36px;
+    }
+
+    .hero-content {
+        min-width: 0;
+        max-width: 570px;
+    }
+
+    .hero-eyebrow {
+        color: #347650;
+        font-size: 0.85rem;
+        font-weight: 700;
+        letter-spacing: 0.09em;
+        line-height: 1.6;
+        margin: 0 0 22px;
+    }
+
+    .hero-title {
+        color: #24352a;
+        font-size: clamp(2.3rem, 4.2vw, 3.7rem);
+        font-weight: 750;
+        letter-spacing: -0.045em;
+        line-height: 1.12;
+        margin: 0 0 24px;
+    }
+
+    .hero-description {
+        color: #42584a;
+        font-size: 1.08rem;
+        line-height: 1.85;
+        margin: 0 0 18px;
+    }
+
+    .hero-disclaimer {
+        color: #617267;
+        font-size: 0.96rem;
+        line-height: 1.8;
+        margin: 0 0 28px;
+    }
+
+    .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+        margin-top: 26px;
+    }
+
+    .hero-image-wrap {
+        position: relative;
+        min-width: 0;
+        width: 100%;
+        max-width: 510px;
+        justify-self: end;
+    }
+
+    .hero-image-frame {
+        position: relative;
+        padding: 9px;
+        border-radius: 28px;
+        background: linear-gradient(
+            145deg,
+            #d94a64 0%,
+            #f3a0ad 35%,
+            #b8d6bd 70%,
+            #347650 100%
+        );
+        box-shadow: 0 22px 55px rgba(36, 76, 54, 0.16);
+    }
+
+    .hero-image {
+        display: block;
+        width: 100%;
+        height: clamp(360px, 43vw, 510px);
+        object-fit: cover;
+        object-position: center;
+        border-radius: 21px;
+        background: #e9eee8;
+    }
+
+    .hero-bottom-note {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #617267;
+        font-size: 0.88rem;
+        line-height: 1.6;
+        margin-top: 28px;
+    }
+
+    .hero-note-dot {
+        flex-shrink: 0;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: #347650;
+    }
+
+    @media (max-width: 800px) {
+        .home-hero {
+            grid-template-columns: 1fr;
+            gap: 34px;
+            min-height: 0;
+            padding-top: 12px;
+        }
+
+        .hero-content {
+            max-width: 650px;
+        }
+
+        .hero-title {
+            font-size: clamp(2.25rem, 7vw, 3.2rem);
+        }
+
+        .hero-image-wrap {
+            width: 100%;
+            max-width: 560px;
+            justify-self: center;
+        }
+
+        .hero-image {
+            height: clamp(340px, 75vw, 500px);
+        }
+    }
+
+    @media (max-width: 480px) {
+        .home-hero {
+            gap: 26px;
+            padding-top: 0;
+        }
+
+        .hero-eyebrow {
+            margin-bottom: 15px;
+        }
+
+        .hero-title {
+            font-size: 2.25rem;
+            margin-bottom: 18px;
+        }
+
+        .hero-description {
+            font-size: 1rem;
+        }
+
+        .hero-image-frame {
+            padding: 6px;
+            border-radius: 21px;
+        }
+
+        .hero-image {
+            height: 340px;
+            border-radius: 16px;
+        }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+        .hero-image-frame {
+            animation: hero-appear 0.7s ease both;
+        }
+
+        .hero-content {
+            animation: hero-text-appear 0.6s ease both;
+        }
+
+        @keyframes hero-appear {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes hero-text-appear {
+            from {
+                opacity: 0;
+                transform: translateX(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 
-<section style="padding: 50px 0; max-width: 720px;">
-    <p style="color: #347650; font-weight: bold;">
-        ROSE LEAF DISEASE CLASSIFICATION
-    </p>
+<section class="home-hero">
 
-    <h1 style="font-size: clamp(2rem, 5vw, 3.5rem);">
-        A smarter way to explore rose leaf health.
-    </h1>
+    <div class="hero-content">
 
-    <p style="font-size: 1.1rem; line-height: 1.8;">
-        Upload a photograph of a rose leaf to explore how a trained
-        image-classification model identifies leaf conditions.
-    </p>
-
-    <p style="color: #617267; line-height: 1.7;">
-        This application is being developed as a research project.
-        Its predictions are experimental and should not replace
-        expert plant-disease diagnosis.
-    </p>
-
-    {% if not current_user.is_authenticated %}
-        <p style="margin-top: 30px;">
-            <a class="button" href="{{ url_for('login') }}">Get started</a>
+        <p class="hero-eyebrow">
+            ROSE LEAF DISEASE CLASSIFICATION
         </p>
-    {% endif %}
+
+        <h1 class="hero-title">
+            A smarter way to explore rose leaf health.
+        </h1>
+
+        <p class="hero-description">
+            Upload a photograph of a rose leaf to identify its possible
+            disease or condition using image classification.
+        </p>
+
+        <p class="hero-disclaimer">
+            This application is being developed as a research project.
+            Its predictions are experimental and should not replace
+            expert plant-disease diagnosis.
+        </p>
+
+        <div class="hero-actions">
+            {% if current_user.is_authenticated %}
+                <a class="button" href="{{ url_for('classify') }}">
+                    Classify a leaf
+                </a>
+
+                <a class="button secondary"
+                   href="{{ url_for('dashboard') }}">
+                    View dashboard
+                </a>
+            {% else %}
+                <a class="button" href="{{ url_for('login') }}">
+                    Get started
+                </a>
+            {% endif %}
+        </div>
+
+        <div class="hero-bottom-note">
+            <span class="hero-note-dot" aria-hidden="true"></span>
+            <span>
+                Designed to support exploration of rose leaf health.
+            </span>
+        </div>
+
+    </div>
+
+    <div class="hero-image-wrap">
+        <div class="hero-image-frame">
+
+            <img
+                class="hero-image"
+                src="{{ url_for('static', filename='rose-home.jpg') }}"
+                alt="A vibrant red rose in bloom"
+                fetchpriority="high"
+            >
+
+        </div>
+    </div>
+
 </section>
 
 {% endblock %}

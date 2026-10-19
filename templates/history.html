@@ -1,84 +1,332 @@
-{% extends "base.html" %}
+ {% extends "base.html" %}
 
 {% block title %}History | Rose Leaf Classifier{% endblock %}
 
+{% block head_extra %}
+<style>
+    .history-page {
+        padding: 10px 0 28px;
+    }
+
+    .history-heading {
+        margin-bottom: 24px;
+    }
+
+    .history-heading h1 {
+        margin: 10px 0;
+        font-size: clamp(1.8rem, 3.5vw, 2.45rem);
+        line-height: 1.2;
+    }
+
+    .history-heading p:last-child {
+        max-width: 680px;
+        margin-bottom: 0;
+        line-height: 1.7;
+    }
+
+    .history-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+        gap: 18px;
+        margin-top: 24px;
+    }
+
+    .history-card {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        color: inherit;
+        text-decoration: none;
+        background: #fff;
+        border: 1px solid #e4ece5;
+        border-radius: 15px;
+        box-shadow: 0 6px 20px rgba(36, 76, 54, .06);
+        transition: transform .18s ease, box-shadow .18s ease,
+                    border-color .18s ease;
+    }
+
+    .history-card:hover {
+        transform: translateY(-3px);
+        border-color: #c7dfce;
+        box-shadow: 0 12px 26px rgba(36, 76, 54, .11);
+    }
+
+    .history-image-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 180px;
+        padding: 10px;
+        overflow: hidden;
+        background: #f3f7f3;
+        border-bottom: 1px solid #e7eee8;
+    }
+
+    .history-image {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        object-position: center;
+        border-radius: 7px;
+    }
+
+    .history-image-placeholder {
+        display: grid;
+        place-items: center;
+        width: 100%;
+        height: 100%;
+        color: #789080;
+        font-size: .9rem;
+    }
+
+    .history-card-body {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        padding: 15px 16px 16px;
+    }
+
+    .history-result-label {
+        margin: 0 0 9px;
+        color: #244c36;
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+    }
+
+    .history-confidence {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 10px;
+        color: #347650;
+        font-size: .87rem;
+    }
+
+    .confidence-pill {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 20px;
+        background: #eef6f0;
+        color: #244c36;
+        font-size: .82rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .history-date {
+        margin: auto 0 0;
+        padding-top: 10px;
+        color: #718075;
+        font-size: .82rem;
+        line-height: 1.5;
+    }
+
+    .history-open {
+        margin-top: 13px;
+        padding-top: 11px;
+        border-top: 1px solid #edf2ee;
+        color: #347650;
+        font-size: .87rem;
+        font-weight: 700;
+    }
+
+    .history-empty {
+        margin-top: 24px;
+        padding: 36px 22px;
+        text-align: center;
+        background: white;
+        border: 1px solid #e4ece5;
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+    }
+
+    .history-empty h2 {
+        margin-top: 0;
+        color: #244c36;
+    }
+
+    .history-empty p {
+        margin: 0 auto 20px;
+        max-width: 460px;
+        line-height: 1.7;
+    }
+
+    @media (max-width: 520px) {
+        .history-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+        }
+
+        .history-image-wrap {
+            height: 145px;
+            padding: 7px;
+        }
+
+        .history-card-body {
+            padding: 12px;
+        }
+
+        .history-result-label {
+            font-size: .92rem;
+        }
+
+        .history-confidence {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+    }
+
+    @media (max-width: 350px) {
+        .history-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .history-image-wrap {
+            height: 190px;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .history-card {
+            transition: none;
+        }
+
+        .history-card:hover {
+            transform: none;
+        }
+    }
+
+    
+    /* Stronger, more defined history cards */
+    .history-card {
+        border: 2px solid #cfdfd2;
+        border-radius: 16px;
+        background: linear-gradient(145deg, #ffffff, #f9fcf9);
+        box-shadow: 0 8px 22px rgba(36, 76, 54, .075);
+    }
+
+    .history-card:hover {
+        border-color: #83ad8e;
+        box-shadow: 0 14px 30px rgba(36, 76, 54, .13);
+        transform: translateY(-4px);
+    }
+
+    .history-image-wrap {
+        border-bottom: 2px solid #dce8de;
+        background: linear-gradient(145deg, #f0f6f1, #ffffff);
+    }
+
+    .history-card-body {
+        background: transparent;
+    }
+
+    .history-result-label {
+        font-weight: 800;
+        letter-spacing: .01em;
+    }
+
+    .confidence-pill {
+        border: 1px solid #c9dfcf;
+        background: #eaf5ed;
+    }
+
+    .history-open {
+        border-top: 1px solid #dfe9e1;
+        font-weight: 800;
+    }
+
+    .history-card:focus-visible {
+        outline: 3px solid rgba(217, 74, 100, .55);
+        outline-offset: 3px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .history-card:hover {
+            transform: none;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-
-<section style="padding: 40px 0;">
-    <p style="color: #347650; font-weight: bold;">PREDICTION HISTORY</p>
-
-    <h1 style="font-size: clamp(1.8rem, 4vw, 2.6rem); margin-bottom: 8px;">
-        Your previous predictions
-    </h1>
-
-    <p style="color: #617267; line-height: 1.7; margin-top: 0;">
-        Review every rose leaf image you have classified. Click a card
-        to see the full result.
-    </p>
+<section class="history-page">
+    <div class="history-heading">
+        <p class="eyebrow">Prediction history</p>
+        <h1>Your previous predictions</h1>
+        <p class="muted">
+            Browse your previous rose leaf classifications. Select any
+            card to view the result and its disease guidance.
+        </p>
+    </div>
 
     {% if predictions and predictions|length > 0 %}
-        <div style="
-            margin-top: 24px;
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 20px;
-        ">
+        <div class="history-grid">
             {% for prediction in predictions %}
-                {% set label = DISPLAY_NAMES.get(prediction.predicted_class, prediction.predicted_class) %}
-                <a
-                    href="{{ url_for('result', prediction_id=prediction.id) }}"
-                    style="
-                        text-decoration: none;
-                        color: inherit;
-                        background: white;
-                        border-radius: 14px;
-                        overflow: hidden;
-                        box-shadow: 0 8px 24px rgba(36, 76, 54, 0.06);
-                        display: block;
-                    "
-                >
-                    {% if prediction.image_filename %}
-                        <img
-                            src="{{ url_for('uploaded_file', filename=prediction.image_filename) }}"
-                            alt="Rose leaf"
-                            style="width: 100%; height: 160px;
-                                   object-fit: cover; display: block;"
-                        >
-                    {% endif %}
-                    <div style="padding: 16px 18px;">
-                        <p style="margin: 0 0 6px; font-weight: bold;
-                                  color: #244c36;">
-                            {{ label }}
-                        </p>
-                        <p style="margin: 0; color: #347650; font-size: 0.9rem;">
-                            Confidence:
-                            {{ "%.1f"|format(prediction.confidence * 100) }}%
-                        </p>
-                        <p style="margin: 8px 0 0; color: #617267;
-                                  font-size: 0.85rem;">
+                {% set label = DISPLAY_NAMES.get(
+                    prediction.predicted_class,
+                    prediction.predicted_class
+                ) %}
+
+                <a class="history-card"
+                   href="{{ url_for('result', prediction_id=prediction.id) }}"
+                   aria-label="View result for {{ label }}">
+
+                    <div class="history-image-wrap">
+                        {% if prediction.image_filename %}
+                            <img
+                                class="history-image"
+                                src="{{ url_for(
+                                    'uploaded_file',
+                                    filename=prediction.image_filename
+                                ) }}"
+                                alt="Uploaded rose leaf classified as {{ label }}"
+                                loading="lazy"
+                            >
+                        {% else %}
+                            <div class="history-image-placeholder">
+                                No image available
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="history-card-body">
+                        <p class="history-result-label">{{ label }}</p>
+
+                        <div class="history-confidence">
+                            <span>Confidence</span>
+                            <span class="confidence-pill">
+                                {{ "%.1f"|format(prediction.confidence * 100) }}%
+                            </span>
+                        </div>
+
+                        <p class="history-date">
                             {{ prediction.created_at.strftime("%b %d, %Y · %H:%M") }}
                         </p>
+
+                        <div class="history-open">
+                            View result <span aria-hidden="true">→</span>
+                        </div>
                     </div>
                 </a>
             {% endfor %}
         </div>
     {% else %}
-        <div style="
-            margin-top: 16px;
-            background: #eef6f0;
-            border: 1px dashed #b7d9c4;
-            border-radius: 14px;
-            padding: 30px 26px;
-            color: #3a5a47;
-            text-align: center;
-        ">
-            <h3 style="margin-top: 0; font-size: 1.1rem;">No predictions yet</h3>
-            <p style="margin: 0 0 18px; line-height: 1.7;">
-                Once you classify your first leaf, your history will appear here.
+        <div class="history-empty">
+            <h2>Your history starts here</h2>
+            <p class="muted">
+                Once you classify your first rose leaf, your prediction
+                will appear here.
             </p>
-            <a class="button" href="{{ url_for('predict') }}">Classify a leaf</a>
+            <a class="button" href="{{ url_for('classify') }}">
+                Classify a leaf
+            </a>
         </div>
     {% endif %}
 </section>
-
 {% endblock %}

@@ -3,44 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>{% block title %}Rose Leaf Classifier{% endblock %}</title>
 
     <style>
-        * {
-            box-sizing: border-box;
+        :root {
+            --green: #244c36;
+            --green-dark: #193c2a;
+            --green-mid: #347650;
+            --green-light: #eef6f0;
+            --rose: #d94a64;
+            --text: #24352a;
+            --muted: #617267;
+            --page: #f5f8f4;
+            --white: #ffffff;
+            --shadow: 0 12px 32px rgba(36, 76, 54, .09);
         }
+
+        * { box-sizing: border-box; }
 
         body {
             margin: 0;
             font-family: Arial, sans-serif;
-            background: #f5f8f4;
-            color: #24352a;
+            background: var(--page);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
         nav {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding: 20px 8%;
-            background: #244c36;
+            justify-content: space-between;
+            gap: 24px;
+            padding: 16px 3%;
+            background: var(--green);
             color: white;
-        }
-
-        nav a {
-            color: white;
-            text-decoration: none;
-            margin-left: 20px;
+            border-bottom: 3px solid rgba(255,255,255,.12);
         }
 
         .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            text-decoration: none;
             font-size: 1.2rem;
-            font-weight: bold;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .brand-rose {
+            width: 29px;
+            height: 29px;
+            color: #ff7388;
+            filter: drop-shadow(0 2px 3px rgba(0,0,0,.18));
+            flex-shrink: 0;
         }
 
         .nav-links {
             display: flex;
             align-items: center;
+            justify-content: flex-end;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .nav-links > a {
+            color: white;
+            text-decoration: none;
+            font-size: .96rem;
+            transition: color .2s ease, opacity .2s ease;
+        }
+
+        .nav-links > a:hover {
+            color: #ffd0d8;
         }
 
         .profile-link {
@@ -49,15 +86,11 @@
             justify-content: center;
             width: 38px;
             height: 38px;
-            margin-left: 20px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.12);
-            transition: background 0.2s ease;
+            background: rgba(255,255,255,.13);
         }
 
-        .profile-link:hover {
-            background: rgba(255, 255, 255, 0.25);
-        }
+        .profile-link:hover { background: rgba(255,255,255,.25); }
 
         .profile-link svg {
             width: 20px;
@@ -66,67 +99,113 @@
         }
 
         main {
-            max-width: 1100px;
+            width: 100%;
+            max-width: 1150px;
             margin: 0 auto;
-            padding: 40px 24px;
+            padding: 42px 24px;
+            flex: 1;
         }
 
         footer {
+            position: relative;
+            margin-top: auto;
+            padding: 24px 20px;
             text-align: center;
-            padding: 24px;
-            color: #617267;
+            color: #e9f2eb;
+            background: var(--green);
+            border-top: 4px solid #347650;
+            font-size: .92rem;
         }
 
+        footer::before {
+            content: "";
+            position: absolute;
+            top: -4px;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #d94a64, #f3a0ad, #347650);
+            opacity: .9;
+        }
+
+        .page-card {
+            background: white;
+            border: 1px solid rgba(36,76,54,.06);
+            border-radius: 18px;
+            padding: clamp(22px, 4vw, 38px);
+            box-shadow: var(--shadow);
+        }
+
+        .content-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow);
+        }
+
+        .eyebrow {
+            color: var(--green-mid);
+            font-size: .85rem;
+            font-weight: 700;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+        }
+
+        .muted { color: var(--muted); }
+
         .button {
-            display: inline-block;
-            padding: 12px 22px;
-            background: #347650;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background: var(--green-mid);
             color: white;
-            border-radius: 8px;
+            border: 1px solid transparent;
+            border-radius: 9px;
             text-decoration: none;
-            border: none;
-            font-size: 1rem;
+            font-size: .96rem;
+            font-weight: 700;
             cursor: pointer;
-            transition: background 0.2s ease;
+            transition: transform .2s ease, background .2s ease, box-shadow .2s ease;
         }
 
         .button:hover {
-            background: #285d3e;
+            background: var(--green);
+            transform: translateY(-1px);
+            box-shadow: 0 5px 14px rgba(36,76,54,.13);
+        }
+
+        .button:disabled {
+            opacity: .6;
+            cursor: wait;
+            transform: none;
         }
 
         .button.secondary {
-            background: #eef6f0;
-            color: #244c36;
-            border: 1px solid #b7d9c4;
+            color: var(--green);
+            background: var(--green-light);
+            border-color: #c7dfce;
         }
 
-        .button.secondary:hover {
-            background: #dcece0;
+        .button.secondary:hover { background: #dcece0; }
+
+        .flash-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 22px;
         }
 
-        /* Flash messages */
         .flash {
             position: relative;
-            display: inline-flex;
-            align-items: center;
-            padding: 12px 42px 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            font-size: 0.95rem;
-            animation: flash-in 0.25s ease;
             max-width: 100%;
-            word-break: break-word;
-        }
-
-        .flash.hiding {
-            opacity: 0;
-            transform: translateY(-4px);
-            transition: opacity 0.25s ease, transform 0.25s ease;
-        }
-
-        @keyframes flash-in {
-            from { opacity: 0; transform: translateY(-4px); }
-            to   { opacity: 1; transform: translateY(0); }
+            padding: 12px 42px 12px 16px;
+            border-radius: 9px;
+            margin-bottom: 10px;
+            font-size: .95rem;
+            animation: fade-in .25s ease;
+            overflow-wrap: anywhere;
         }
 
         .flash.success {
@@ -144,75 +223,65 @@
         .flash-close {
             position: absolute;
             top: 50%;
-            right: 10px;
+            right: 9px;
             transform: translateY(-50%);
-            width: 24px;
-            height: 24px;
-            border: none;
+            border: 0;
+            border-radius: 50%;
+            width: 26px;
+            height: 26px;
             background: transparent;
             color: inherit;
-            font-size: 1.15rem;
-            line-height: 1;
             cursor: pointer;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.15s ease;
+            font-size: 1.2rem;
         }
 
-        .flash-close:hover {
-            background: rgba(0, 0, 0, 0.08);
+        .flash.hiding {
+            opacity: 0;
+            transform: translateY(-4px);
+            transition: opacity .25s, transform .25s;
         }
 
-        /* Form styles shared by login/register */
         .auth-card {
-            max-width: 440px;
-            margin: 20px auto;
+            max-width: 460px;
+            margin: 22px auto;
             background: white;
             padding: 36px 32px;
-            border-radius: 14px;
-            box-shadow: 0 10px 30px rgba(36, 76, 54, 0.08);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
         }
 
-        .auth-card h1 {
-            margin-top: 0;
-            font-size: 1.7rem;
-        }
+        .auth-card h1 { margin-top: 0; font-size: 1.7rem; }
 
-        .auth-card p.subtitle {
-            color: #617267;
+        .auth-card .subtitle {
             margin-top: 0;
+            color: var(--muted);
             line-height: 1.6;
         }
 
-        .form-group {
-            margin-bottom: 18px;
-        }
+        .form-group { margin-bottom: 18px; }
 
         .form-group label {
             display: block;
-            margin-bottom: 6px;
-            font-weight: bold;
-            font-size: 0.95rem;
-            color: #244c36;
+            margin-bottom: 7px;
+            color: var(--green);
+            font-size: .95rem;
+            font-weight: 700;
         }
 
-        .form-group input {
+        .form-group input:not([type="checkbox"]) {
             width: 100%;
             padding: 12px 14px;
             border: 1px solid #cbd8d0;
-            border-radius: 8px;
-            font-size: 1rem;
+            border-radius: 9px;
+            font: inherit;
             background: #f9fbf9;
-            color: #24352a;
-            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+            color: var(--text);
         }
 
         .form-group input:focus {
             outline: none;
-            border-color: #347650;
-            box-shadow: 0 0 0 3px rgba(52, 118, 80, 0.15);
+            border-color: var(--green-mid);
+            box-shadow: 0 0 0 3px rgba(52,118,80,.15);
             background: white;
         }
 
@@ -221,15 +290,9 @@
             background: #fdf6f6;
         }
 
-        .form-group input:disabled {
-            background: #eef1ee;
-            color: #617267;
-            cursor: not-allowed;
-        }
-
         .field-error {
             color: #b13b3b;
-            font-size: 0.85rem;
+            font-size: .85rem;
             margin-top: 5px;
             min-height: 1em;
         }
@@ -238,113 +301,196 @@
             background: #fbe9e9;
             color: #7a2323;
             border: 1px solid #f0c0c0;
-            border-radius: 8px;
+            border-radius: 9px;
             padding: 12px 16px;
             margin-bottom: 20px;
-            font-size: 0.92rem;
+            font-size: .92rem;
         }
 
-        .form-errors ul {
-            margin: 0;
-            padding-left: 18px;
-        }
+        .form-errors ul { margin: 0; padding-left: 18px; }
 
-        .auth-card .button {
-            width: 100%;
-            text-align: center;
-            margin-top: 6px;
-        }
+        .auth-card .button { width: 100%; margin-top: 6px; }
 
         .auth-switch {
             text-align: center;
             margin-top: 22px;
-            color: #617267;
-            font-size: 0.95rem;
+            color: var(--muted);
+            font-size: .95rem;
         }
 
         .auth-switch a {
-            color: #347650;
-            font-weight: bold;
+            color: var(--green-mid);
+            font-weight: 700;
             text-decoration: none;
         }
 
-        .auth-switch a:hover {
-            text-decoration: underline;
+        .auth-switch a:hover { text-decoration: underline; }
+
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 760px) {
+            nav {
+                align-items: flex-start;
+                flex-direction: column;
+                padding: 16px 5%;
+                gap: 16px;
+            }
+
+            .nav-links {
+                justify-content: flex-start;
+                gap: 15px;
+                width: 100%;
+            }
+
+            .nav-links > a { font-size: .9rem; }
+
+            main { padding: 28px 16px; }
+
+            .page-card { border-radius: 14px; }
+
+            .auth-card { padding: 28px 22px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: .01ms !important;
+                transition-duration: .01ms !important;
+                scroll-behavior: auto !important;
+            }
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .brand-icon {
+            width: 28px;
+            height: 28px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        /* Softer page background and a more finished card appearance */
+        body {
+            background:
+                radial-gradient(ellipse at 8% 8%, rgba(217, 74, 100, .045), transparent 32%),
+                radial-gradient(ellipse at 92% 20%, rgba(52, 118, 80, .075), transparent 35%),
+                #f1f6f1;
+        }
+
+        .page-card,
+        .content-card {
+            border: 1px solid rgba(36, 76, 54, .08);
+            box-shadow:
+                0 14px 32px rgba(36, 76, 54, .065),
+                0 2px 7px rgba(36, 76, 54, .025);
+        }
+
+        .page-card {
+            position: relative;
+        }
+
+        .content-card {
+            transition: border-color .2s ease, box-shadow .2s ease,
+                        transform .2s ease;
+        }
+
+        .content-card:hover {
+            border-color: rgba(52, 118, 80, .2);
+            box-shadow: 0 12px 28px rgba(36, 76, 54, .09);
+        }
+
+        /* Consistent keyboard focus */
+        .button:focus-visible,
+        a:focus-visible,
+        input:focus-visible {
+            outline: 3px solid rgba(217, 74, 100, .45);
+            outline-offset: 3px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .content-card {
+                transition: none;
+            }
         }
     </style>
+    {% block head_extra %}{% endblock %}
 </head>
 
 <body>
 <nav>
     <a class="brand" href="{{ url_for('home') }}">
-        Rose Leaf Classifier
+        <img
+            src="{{ url_for('static', filename='rose-svgrepo-com.svg') }}"
+            alt=""
+            class="brand-icon"
+        >
+        <span>Rose Leaf Classifier</span>
     </a>
 
     <div class="nav-links">
-        <a href="{{ url_for('home') }}">Home</a>
-
         {% if current_user.is_authenticated %}
             <a href="{{ url_for('dashboard') }}">Dashboard</a>
-            <a href="{{ url_for('predict') }}">Classify</a>
+            <a href="{{ url_for('classify') }}">Classify</a>
             <a href="{{ url_for('history') }}">History</a>
             <a href="{{ url_for('logout') }}">Logout</a>
             <a class="profile-link" href="{{ url_for('profile') }}"
-               title="Your profile">
+               title="Your profile" aria-label="Your profile">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5Z"/>
                 </svg>
-                <span style="position:absolute;left:-9999px;">Profile</span>
             </a>
         {% else %}
             <a class="profile-link" href="{{ url_for('login') }}"
-               title="Login / Register">
+               title="Login / Register" aria-label="Login or register">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
                     <path d="M12 12a5 5 0 1 0-5-5 5 5 0 0 0 5 5Zm0 2c-4.42 0-8 2.24-8 5v1h16v-1c0-2.76-3.58-5-8-5Z"/>
                 </svg>
-                <span style="position:absolute;left:-9999px;">Login / Register</span>
             </a>
         {% endif %}
     </div>
 </nav>
 
-    <main>
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div style="display: flex; flex-direction: column; align-items: center; margin-bottom: 24px;">
-                    {% for category, message in messages %}
-                        <div class="flash {{ category }}" role="status">
-                            {{ message }}
-                            <button type="button" class="flash-close"
-                                    aria-label="Dismiss message">&times;</button>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
+<main>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-wrap">
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}" role="status">
+                        {{ message }}
+                        <button type="button" class="flash-close"
+                                aria-label="Dismiss message">&times;</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
 
-        {% block content %}{% endblock %}
-    </main>
+    {% block content %}{% endblock %}
+</main>
 
-    <footer>
-        Rose Leaf Disease Classification Project
-    </footer>
+<footer>Rose Leaf Disease Classification Project</footer>
 
-    <script>
-        document.querySelectorAll(".flash").forEach((flash) => {
-            const closeBtn = flash.querySelector(".flash-close");
+<script>
+    document.querySelectorAll(".flash").forEach((flash) => {
+        const closeBtn = flash.querySelector(".flash-close");
 
-            function dismiss() {
-                if (!flash.isConnected) return;
-                flash.classList.add("hiding");
-                setTimeout(() => flash.remove(), 250);
-            }
+        function dismiss() {
+            if (!flash.isConnected) return;
+            flash.classList.add("hiding");
+            setTimeout(() => flash.remove(), 250);
+        }
 
-            if (closeBtn) {
-                closeBtn.addEventListener("click", dismiss);
-            }
-
-            setTimeout(dismiss, 6000);
-        });
-    </script>
+        if (closeBtn) closeBtn.addEventListener("click", dismiss);
+        setTimeout(dismiss, 6000);
+    });
+</script>
+{% block scripts %}{% endblock %}
 </body>
 </html>

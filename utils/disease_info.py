@@ -125,8 +125,6 @@ CLASS_NAMES = [
     "ROSE_MOSAIC",
 ]
 
-# Display names for UI — keeps internal class keys stable while
-# presenting human-friendly labels to the user.
 DISPLAY_NAMES = {
     "Black Spot": "Black Spot",
     "Downy Mildew": "Downy Mildew",

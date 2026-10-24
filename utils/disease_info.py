@@ -1,3 +1,4 @@
+# Predefined recommendations and descriptions for rose leaf disease classes.
 """
 Educational descriptions for each rose leaf class.
 

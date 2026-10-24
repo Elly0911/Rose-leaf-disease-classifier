@@ -1,4 +1,4 @@
-
+# Uses Keras to load a trained hybrid EfficientNetB0-ViT model
 """Model loading and inference for the EfficientNetB0-ViT classifier."""
 
 import os
